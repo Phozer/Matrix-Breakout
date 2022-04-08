@@ -5,10 +5,14 @@
 
 //Initaliserung SPI
 void SPI_init();
-//SPI senden
-void SPI_write(char data);
-//SPI senden eines Arrays
-void SPI_write_array(int array[], int arrayindex);
+
+//SPI Digi Dot Booster senden
+void SPI_write_DDB(char data);
+//SPI Digi Dot Booster senden eines Arrays
+void SPI_write_array_DDB(int array[], int arrayindex);
+
+//SPI Gyroscope
+char SPI_read_GS(char instruction);
 
 
 

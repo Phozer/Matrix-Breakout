@@ -41,6 +41,7 @@
 // Include Files
 #include <xc.h>
 #include "SPI.h"
+#include "DIGI_DOT_BOOSTER.h"
 
 //#define _XTAL_FREQ 8000000          //Frequenz 8 MHz wird im Header File gemacht
 
@@ -50,7 +51,7 @@
 
 //*** Funktionsprototypen ***
 
-//void initADC (void);
+
 
 // *** Main-Routine ***
 void main(void) {
@@ -67,19 +68,8 @@ void main(void) {
   SPI_init();
 
 	while (1) {
-//        for(int i = 0; i <256; i++){
-//            SPI_write(i);
-//            __delay_ms(100);
-//        }
-        int buffer[4];
-        buffer[0] = 1;
-        buffer[1] = 2;
-        buffer[2] = 3;
-        buffer[3] = 4;
-        SPI_write_array(buffer, 3);
-        
-        
     
+
 	}
 }
 
