@@ -13,7 +13,7 @@
 
 void SPI_init(){  
   // this setting selects master mode with frequency fosc/4
-  SSPCON1bits.SSPM0 = 0;
+  SSPCON1bits.SSPM0 = 1;
   SSPCON1bits.SSPM1 = 0;
   SSPCON1bits.SSPM2 = 0;
   SSPCON1bits.SSPM3 = 0;
@@ -54,18 +54,21 @@ void SPI_init(){
 
 void SPI_write_DDB(char data){
     CS_DIGI_DOT_BOOSTER = 0;
+    __delay_ms(5);
     SSPBUF = data;
     while(BF == 0);
+    __delay_ms(4);                          //delay für DDB
     CS_DIGI_DOT_BOOSTER = 1;
 }
 
 void SPI_write_array_DDB(int array[], int arrayindex){
     CS_DIGI_DOT_BOOSTER = 0;
-    for(int i = 0; i < arrayindex+1; i++){
+    __delay_ms(5);
+    for(int i = 0; i < arrayindex + 1; i++){
         int data = array[i];
         SSPBUF = data;
         while(BF == 0);
-        __delay_ms(100);                        //muss noch entfernt werden
+        __delay_ms(1000);        //delay für DDB
         }
     CS_DIGI_DOT_BOOSTER = 1;
 }
@@ -80,5 +83,25 @@ char SPI_read_GS(char instruction){
   CS_GYROSCOPE = 1;
   return data;
 }
+
+//void SPI_start(char cs){                    //CS übergeben, 1 = DDB, 2 = GS
+//    if(cs == 1){
+//        CS_DIGI_DOT_BOOSTER = 0;
+//    }
+//    else if(cs == 2){
+//        CS_GYROSCOPE = 0;
+//    }    
+//}
+//
+//void SPI_end(char cs){                      //CS übergeben, 1 = DDB, 2 = GS
+//    if(cs == 1){
+//        CS_DIGI_DOT_BOOSTER = 0;
+//        CS_GYROSCOPE = 1;
+//    }
+//    else if(cs == 2){
+//        CS_DIGI_DOT_BOOSTER = 1;
+//        CS_GYROSCOPE = 0;        
+//    }
+//}
 
 

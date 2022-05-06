@@ -58,18 +58,45 @@ void main(void) {
   
 	// *** Port Initialisierung ***
 	// ** TRISx **      0 = Output, 1 = Input
+    TRISBbits.TRISB0 = 0;
   
 
 	// ** ANSELx **      0 = Digital I/O, 1 = Analog I/0
+    ANSELBbits.ANSB0 = 0;
   
   
 	
-  
-  SPI_init();
-
-	while (1) {
+    
+    SPI_init();
+    SPI_write_DDB(0);
+    __delay_ms(1000);
+    RB0 = 0;                //Reset
+    __delay_ms(1000);
+    RB0 = 1;            //Reset off
+    __delay_ms(5000);
+    booster_init();
+    __delay_ms(30);
+    //booster_rgbOrder(2, 1, 3);
+    //__delay_ms(4000);
+    booster_setRGB(255, 255, 0);
+    booster_setLED(5);
+    booster_show();
+    //__delay_ms(4000);
     
 
+	while (1) {
+        for (int i = 0; i < 50; i++){
+            booster_setLED(i);
+            booster_show();            
+        }
+        
+        
+//        int buffer[4];
+//        buffer[0]= 1;
+//        buffer[1] = 2;
+//        buffer[2] = 3;
+//        buffer[3] = 4;
+//        SPI_write_array_DDB(buffer,3);
 	}
 }
 
