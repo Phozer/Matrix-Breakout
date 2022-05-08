@@ -14,6 +14,10 @@ void SPI_write_array_DDB(int array[], int arrayindex);
 //SPI Gyroscope
 char SPI_read_GS(char instruction);
 
+void SPI_start(char cs);
+
+void SPI_end(char cs);
+
 
 
 

@@ -10,3 +10,5 @@ void booster_setLED(char led_number);
 void booster_setAll(void);
 void booster_setRange(char start, char end);
 void booster_rgbOrder(char index_red, char index_green, char index_blue);
+void booster_shiftup(char start, char end, char count);
+void booster_shiftdown(char start, char end, char count);

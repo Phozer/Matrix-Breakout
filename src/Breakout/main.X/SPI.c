@@ -23,7 +23,7 @@ void SPI_init(){
   
   // Configure The Clock Polarity & Phase
   SSPCON1bits.CKP = 0;
-  SSPSTATbits.CKE = 0; //Data transimitted on the rising edge
+  SSPSTATbits.CKE = 1; 
   
   // Slew rate control enabled for High Speed mode
   SSPSTATbits.SMP = 0;
@@ -68,7 +68,7 @@ void SPI_write_array_DDB(int array[], int arrayindex){
         int data = array[i];
         SSPBUF = data;
         while(BF == 0);
-        __delay_ms(1000);        //delay für DDB
+        //__delay_ms(1);        //delay für DDB
         }
     CS_DIGI_DOT_BOOSTER = 1;
 }
@@ -84,24 +84,5 @@ char SPI_read_GS(char instruction){
   return data;
 }
 
-//void SPI_start(char cs){                    //CS übergeben, 1 = DDB, 2 = GS
-//    if(cs == 1){
-//        CS_DIGI_DOT_BOOSTER = 0;
-//    }
-//    else if(cs == 2){
-//        CS_GYROSCOPE = 0;
-//    }    
-//}
-//
-//void SPI_end(char cs){                      //CS übergeben, 1 = DDB, 2 = GS
-//    if(cs == 1){
-//        CS_DIGI_DOT_BOOSTER = 0;
-//        CS_GYROSCOPE = 1;
-//    }
-//    else if(cs == 2){
-//        CS_DIGI_DOT_BOOSTER = 1;
-//        CS_GYROSCOPE = 0;        
-//    }
-//}
 
 

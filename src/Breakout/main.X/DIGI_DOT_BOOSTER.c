@@ -19,6 +19,8 @@
 #define BOOSTER_SETALL      0xA5
 #define BOOSTER_SETRANGE    0xA6
 #define BOOSTER_RGBORDER    0xC1
+#define BOOSTER_SHIFTUP     0xB3
+#define BOOSTER_SHIFTDOWN   0xB4
 
 #define bitsPerLED   24             //24 bit fuer WS2812(RGB)
 #define ledCount     255            //Anzahl LED
@@ -87,7 +89,23 @@ void booster_rgbOrder(char index_red, char index_green, char index_blue){
     SPI_write_array_DDB(buffer, 3);
 }
 
+void booster_shiftup(char start, char end, char count){
+  int buffer[4];
+  buffer[0] = BOOSTER_SHIFTUP;
+  buffer[1] = start;
+  buffer[2] = end;
+  buffer[3] = count;
+  SPI_write_array_DDB(buffer, 3);
+}
 
+void booster_shiftdown(char start, char end, char count){
+  int buffer[4];
+  buffer[0] = BOOSTER_SHIFTDOWN;
+  buffer[1] = start;
+  buffer[2] = end;
+  buffer[3] = count;
+  SPI_write_array_DDB(buffer, 3);
+}
 
 
 

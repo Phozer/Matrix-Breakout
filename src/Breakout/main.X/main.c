@@ -42,6 +42,7 @@
 #include <xc.h>
 #include "SPI.h"
 #include "DIGI_DOT_BOOSTER.h"
+#include "gamelogic.h"
 
 //#define _XTAL_FREQ 8000000          //Frequenz 8 MHz wird im Header File gemacht
 
@@ -69,34 +70,35 @@ void main(void) {
     
     SPI_init();
     SPI_write_DDB(0);
-    __delay_ms(1000);
+    __delay_ms(100);
     RB0 = 0;                //Reset
-    __delay_ms(1000);
+    __delay_ms(100);
     RB0 = 1;            //Reset off
-    __delay_ms(5000);
+    __delay_ms(100);
     booster_init();
     __delay_ms(30);
-    //booster_rgbOrder(2, 1, 3);
-    //__delay_ms(4000);
-    booster_setRGB(255, 255, 0);
-    booster_setLED(5);
-    booster_show();
-    //__delay_ms(4000);
-    
+    booster_rgbOrder(2, 3 ,1);        //Standardwert für WS2812
+    posX1Bar = 6;
+    posX2Bar = 9;
+    posBall = 120;
+    initalizeBar(posX1Bar, posX2Bar);
+    initalizeBall(posBall);
 
-	while (1) {
-        for (int i = 0; i < 50; i++){
-            booster_setLED(i);
-            booster_show();            
-        }
-        
-        
-//        int buffer[4];
-//        buffer[0]= 1;
-//        buffer[1] = 2;
-//        buffer[2] = 3;
-//        buffer[3] = 4;
-//        SPI_write_array_DDB(buffer,3);
+	while (1) {    
+    
+    for(int i = 0; i < 14; i++){
+      __delay_ms(100);
+      barChangePosition(1);
+      barMove(posX1Bar, posX2Bar);
+      ballMoveStraight();
+    }
+    
+    for(int i = 0; i < 14; i++){
+      __delay_ms(100);
+     barChangePosition(0);
+     barMove(posX1Bar, posX2Bar);
+     ballMoveStraight();
+    }
 	}
 }
 
