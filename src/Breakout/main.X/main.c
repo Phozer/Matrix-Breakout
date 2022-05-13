@@ -2,7 +2,7 @@
  * File:   main.c
  * Author: sven_stocker
  *
- * Created on 25. März 2022, 15:49
+ * Created on 25. M?rz 2022, 15:49
  */
 
 
@@ -44,14 +44,16 @@
 #include "DIGI_DOT_BOOSTER.h"
 #include "gamelogic.h"
 
-//#define _XTAL_FREQ 8000000          //Frequenz 8 MHz wird im Header File gemacht
 
+#define LEFT    0x01
+#define RIGHT  0x00
 
 // *** Globale Variablen ***
 
-
 //*** Funktionsprototypen ***
-
+//void posEdgeDetection(void);
+void initINTR(void);
+void interrupt ISR(void);
 
 
 // *** Main-Routine ***
@@ -60,54 +62,53 @@ void main(void) {
 	// *** Port Initialisierung ***
 	// ** TRISx **      0 = Output, 1 = Input
     TRISBbits.TRISB0 = 0;
-  
+    TRISAbits.TRISA0 = 1;
+    TRISAbits.TRISA1 = 1;  
 
 	// ** ANSELx **      0 = Digital I/O, 1 = Analog I/0
     ANSELBbits.ANSB0 = 0;
-  
-  
-	
+    ANSELAbits.ANSA0 = 0;
+    ANSELAbits.ANSA1 = 0;    
     
+    initINTR();
     SPI_init();
     SPI_write_DDB(0);
-    __delay_ms(100);
+    __delay_ms(1000);
     RB0 = 0;                //Reset
     __delay_ms(100);
-    RB0 = 1;            //Reset off
+    RB0 = 1;                //Reset off
     __delay_ms(100);
     booster_init();
     __delay_ms(30);
     booster_rgbOrder(2, 3 ,1);        //Standardwert für WS2812
-    posX1Bar = 6;
-    posX2Bar = 9;
-    posBall = 120;
-    initalizeBar(posX1Bar, posX2Bar);
-    initalizeBall(posBall);
+    initalizeGame();
 
-	while (1) {    
-    
-    for(int i = 0; i < 14; i++){
-      __delay_ms(100);
-      barChangePosition(1);
-      barMove(posX1Bar, posX2Bar);
-      ballMoveStraight();
-    }
-    
-    for(int i = 0; i < 14; i++){
-      __delay_ms(100);
-     barChangePosition(0);
-     barMove(posX1Bar, posX2Bar);
-     ballMoveStraight();
-    }
+	while (1) {
+		ballMove();
 	}
 }
 
 
+void initINTR(void) {
+	IOCAPbits.IOCAP0 = 1;       //IOC Port B pin 5 positive Flanke getriggert
+    IOCAPbits.IOCAP1 = 1;
+	INTCONbits.IOCIE = 1;       //IOC enable bit
+	INTCONbits.GIE = 1;         //Enable Interrupt
+}
 
-
-
-
-
-
-
-
+void interrupt ISR(void) {
+	if (IOCAF0) {				//Interrupt Flag vom IOC pin
+		__delay_ms(1);         //Entprellen des Schalters
+		if (RA0 == 1) {
+			barMove(RIGHT);
+		}
+		IOCAF0 = 0;
+	}
+    if(IOCAF1){
+        __delay_ms(1);
+        if(RA1 == 1){
+            barMove(LEFT);
+        }
+        IOCAF1 = 0;
+    }
+}

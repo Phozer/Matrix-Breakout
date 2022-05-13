@@ -2,9 +2,17 @@
 //	/******************** Compiler-Includes, Clock Definiton **********************************/
 #include <xc.h>
 
-char posX1Bar, posX2Bar, posBall;
-void initalizeBar(char posX1Bar, char posX2Bar);
-void barMove(char posX1Bar, char posX2Bar);
-void barChangePosition(char direction);
-void initalizeBall(char posBall);
+//Funktionsprototypen
+void initalizeGame(void);
+void initalizeBar(void);
+void initializeBricks(void);
+void barMove(char direction);
+void barShow(void);
+void initalizeBall(void);
+void ballMove(void);;
 void ballMoveStraight(void);
+void ballMoveDiagonal(void);
+void ballDeleteOldPos(void);
+void ballShowNewPos(void);
+void collisionDetectorWithBar(void);
+void collisionDetectorWithBricks(void);
