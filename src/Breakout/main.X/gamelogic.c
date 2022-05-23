@@ -16,9 +16,6 @@
 #define RIGHT           0x00
 #define LEFT            0x01
 #define NONE            0x02
-#define LIGHT           0x00
-#define STRONG          0x01
-
 
 //Globale Variabeln
 char posX1Bar, posX2Bar, posBall;
@@ -28,18 +25,19 @@ bool bricks[20];
 
 
 //Spielinitialisierung
-
 void initializeGame(void){
   initializeBricks();
   initializeBar();
   initializeBall();  
 }
 
+//Initialisierung von 20 Bricks
 void initializeBricks(void){
   //Alle Bricks auf True setzen
   for(int i = 0; i < 20; i++){
     bricks[i] = true;
   }
+  //Zeichnen der orangen Bricks
   for(int i = 176; i < 256; i = i + 8){
     if(i >= 192 && i < 208 || i >= 224 && i < 240){
       booster_setRGB(18, 8, 0);
@@ -55,6 +53,7 @@ void initializeBricks(void){
     }           
   }
   booster_show();
+  //Zeichnen der blauen Bricks
   for(int i = 176; i < 256; i = i + 8){
     if(i >= 176 && i < 192 || i >= 208 && i < 224 || i >= 240){
       booster_setRGB(0, 0, 20);
@@ -72,21 +71,28 @@ void initializeBricks(void){
   booster_show();
 }
 
-//Brett-Funktionen
+//Initialisierung des Bretts
 void initializeBar(void){
+  booster_setRGB(0, 0, 0);
+  booster_setRange(0, 15);
+  booster_show();
   posX1Bar = 7;
   posX2Bar = 9;
   booster_setRGB(20, 0, 0);
   booster_setRange(posX1Bar, posX2Bar);  
   booster_show();
 }
-void barMove(char direction){         
+
+//Bewegen des Bretts
+void barMove(char direction){
+  //nach links bewegen
   if(direction == LEFT){
     if(posX2Bar < 15){
         posX1Bar++;
         posX2Bar++;
     }
   }
+  //nach rechts bewegen
   else if(direction == RIGHT){
     if(posX1Bar > 0){
         posX1Bar--;
@@ -95,20 +101,20 @@ void barMove(char direction){
   }
   barShow();
 }
+
+//Anzeigen der neuen Brett Position
 void barShow(void){
-  PIE1bits.RCIE = 0;                                   /*Receive Interrupt ausschalten*/  
+  INTCONbits.PEIE = 0;                                   //Peripheral Interrupt ausschalten  
   booster_setRGB(0, 0, 0);
   booster_setRange(0, 15);
   booster_show();
   booster_setRGB(20, 0, 0);
   booster_setRange(posX1Bar, posX2Bar);
   booster_show();
-  PIE1bits.RCIE = 1;                                   /*Receive Interrupt einschalten*/
+  INTCONbits.PEIE = 1;                                    //Peripheral Interrupt einschalten
 }
 
-
-
-//Ball-Funktionen
+//Initialiserung des Balles
 void initializeBall(void){
   posBall = 120;
   booster_setRGB(0, 20, 0);
@@ -118,6 +124,7 @@ void initializeBall(void){
   horizontalDirection = NONE;
 }
 
+//Bewegen des Balles
 void ballMove(void){
   checkWinCondition();
   if(horizontalDirection == NONE){
@@ -129,7 +136,9 @@ void ballMove(void){
   __delay_ms(ballSpeed);
 }
 
+//Gerade Bewegung des Balles
 void ballMoveStraight(void){
+  //Ball bewegt sich nach oben
   if(posBall < 240 && verticalDirection == UP){    
     ballDeleteOldPos();
     posBall = posBall + 16;
@@ -138,6 +147,7 @@ void ballMoveStraight(void){
       verticalDirection = DOWN;
     }    
   }
+  //Ball bewegt sich nach unten
   else if(posBall > 31 && verticalDirection == DOWN){
     ballDeleteOldPos();
     posBall = posBall -16;
@@ -146,11 +156,13 @@ void ballMoveStraight(void){
       collisionDetectorWithBar();
     }
   }
+  //Bedingung f�r eine Kollision mit einem Brick
   if(posBall > 159){
       collisionDetectorWithBricks();
   }
 }
 
+//Diagonale Bewegung des Balles
 void ballMoveDiagonal(void){
   if(posBall < 240 && verticalDirection == UP && horizontalDirection == LEFT){
     ballDeleteOldPos();
@@ -198,72 +210,83 @@ void ballMoveDiagonal(void){
   }
   if(posBall > 159){
       collisionDetectorWithBricks();
-  }
-  
+  }  
 }
+  
 
+//L�schen der alten Position des Balles
 void ballDeleteOldPos(void){
-  PIE1bits.RCIE = 0;                                   /*Receive Interrupt ausschalten*/
+  INTCONbits.PEIE = 0;                                   //Peripheral Interrupt ausschalten
   booster_setRGB(0,0,0);
   booster_setLED(posBall);
   booster_show();
-  PIE1bits.RCIE = 1;                                   /*Receive Interrupt einschalten*/
+  INTCONbits.PEIE = 1;                                   //Peripheral Interrupt einschalten
 }
 
 void ballShowNewPos(void){
-  PIE1bits.RCIE = 0;                                   /*Receive Interrupt ausschalten*/
+  INTCONbits.PEIE = 0;                                   //Peripheral Interrupt ausschalten
   booster_setRGB(0, 20, 0);
   booster_setLED(posBall);
   booster_show();
-  PIE1bits.RCIE = 1;                                   /*Receive Interrupt einschalten*/  
+  INTCONbits.PEIE = 1;                                   //Peripheral Interrupt einschalten  
 }
 
+//Detektion, ob der Ball das Brett trifft
 void collisionDetectorWithBar(void){
   verticalDirection = UP;
+  //Ball trifft das Brett rechts
   if((posBall - 16) == posX1Bar){
     if(horizontalDirection == NONE){
       horizontalDirection = RIGHT;
     }   
   }
+  //Ball trifft das Brett in der Mitte
   else if((posBall - 16) == (posX1Bar + 1)){
     horizontalDirection = NONE;
   }
+  //Ball trifft das Brett links
   else if((posBall - 16) == posX2Bar){
     if(horizontalDirection == NONE){
       horizontalDirection = LEFT;
     }
   }
+  //Ball trifft das Brett an der rechten Kante
   else if((posBall - 16) == (posX1Bar - 1)){
     horizontalDirection = RIGHT;
   }
+  //Ball trifft das Brett an der linken Kante
   else if((posBall - 16) == (posX2Bar + 1)){
     horizontalDirection = LEFT;
   }
+  //Ball hat das Brett nicht getroffen
   else{
+    INTCONbits.PEIE = 0; 
     initializeBricks();
     ballDeleteOldPos();
     posBall = 120;
     ballShowNewPos();
     horizontalDirection = NONE;
     verticalDirection = DOWN;
+    INTCONbits.PEIE = 1; 
   }
 }
 
+//Detektion, ob der Ball ein Brick trifft
 void collisionDetectorWithBricks(void){
+  //Frontales treffen eines Bricks
   if(verticalDirection == UP  && horizontalDirection == NONE){
     if(bricks[(posBall - 160) / 4] == true){
         verticalDirection = DOWN;
         bricks[(posBall - 160) / 4] = false;
         deleteBrick((posBall-160) / 4);
-    }
-    
+    }    
   }
+  //Diagonales Treffen eines Bricks
   else if(verticalDirection == UP && horizontalDirection != NONE){
-    
     if(bricks[(posBall - 160) / 4] == true){
         verticalDirection = DOWN;
         bricks[(posBall - 160) / 4] = false;
-        deleteBrick((posBall-160) / 4);
+        deleteBrick((posBall-160) / 4);    
     }
     if (posBall % 4 == 0){
         if(verticalDirection == UP){
@@ -279,10 +302,10 @@ void collisionDetectorWithBricks(void){
             }
         }
         else if(verticalDirection == DOWN){
-            if(horizontalDirection == RIGHT && bricks[((posBall - 160) / 4) - 4 - 1] == true){
+            if(horizontalDirection == RIGHT && bricks[((posBall - 160) / 4) - 1] == true){
                 horizontalDirection = LEFT;
-                bricks[((posBall - 160) / 4) - 4 - 1] = false;
-                deleteBrick(((posBall - 160) / 4) - 4 - 1);
+                bricks[((posBall - 160) / 4) - 1] = false;
+                deleteBrick(((posBall - 160) / 4) - 1);
             }
         }
     }
@@ -300,23 +323,27 @@ void collisionDetectorWithBricks(void){
             } 
         }
         else if(verticalDirection == DOWN){
-            if(horizontalDirection == LEFT && bricks[((posBall - 160) / 4) - 4 + 1] == true){
+            if(horizontalDirection == LEFT && bricks[((posBall - 160) / 4) + 1] == true){
                 horizontalDirection = RIGHT;
-                bricks[((posBall - 160) / 4) - 4 + 1] = false;
-                deleteBrick(((posBall - 160) / 4) - 4 + 1);
+                bricks[((posBall - 160) / 4) + 1] = false;
+                deleteBrick(((posBall - 160) / 4) + 1);
             }
         }
     }
   }
 }
 
+//Brick l�schen bei Aufprall des Balles
 void deleteBrick(char arrayIndex){
+    INTCONbits.PEIE = 0;                                      //Peripheral Interrupt ausschalten 
     booster_setRGB(0, 0, 0);
     for(int i = 0; i < 4; i ++){
         booster_setLED(176 + i + arrayIndex * 4);
     }
+    INTCONbits.PEIE = 1;                                      //Peripheral Interrupt einschalten 
 }
 
+//�berpr�fen, ob das Spiel gewonnen wurde
 void checkWinCondition(void){
   int count = 0;
   for(int i = 0; i < 20; i++){
@@ -325,6 +352,8 @@ void checkWinCondition(void){
       }
   }
   if(count == 20){
+      INTCONbits.PEIE = 0;                                    //Peripheral Interrupt ausschalten
       initializeGame();
+      INTCONbits.PEIE = 1;                                    //Peripheral Interrupt einschalten
   }
 }

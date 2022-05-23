@@ -7,12 +7,10 @@
 
 #include "SPI.h"
 
-#define CS_GYROSCOPE                RB3
 #define CS_DIGI_DOT_BOOSTER         RB4
 
-
 void SPI_init(){  
-  // this setting selects master mode with frequency fosc/4
+  // this setting selects master mode with frequency fosc/16
   SSPCON1bits.SSPM0 = 1;
   SSPCON1bits.SSPM1 = 0;
   SSPCON1bits.SSPM2 = 0;
@@ -36,57 +34,39 @@ void SPI_init(){
   // TRISx 0 = Output, 1 = Input
   TRISBbits.TRISB3 = 0; //CS Gyroscope 
   TRISBbits.TRISB4 = 0; //CS Digi Dot Booster
-  TRISBbits.TRISB5 = 0; //SDO -> Output
-  TRISBbits.TRISB6 = 1; //SDI -> Input
+  TRISBbits.TRISB5 = 0; //SDO -> Output (MOSI)
+  TRISBbits.TRISB6 = 1; //SDI -> Input  (MISO)
   TRISBbits.TRISB7 = 0; //SCK -> Output
   
-  // ANSELx 0 = Digital i/o, 1 = Analog i/o
-  ANSELBbits.ANSB3 = 0;
-  ANSELBbits.ANSB4 = 0;
-  ANSELBbits.ANSB5 = 0;
-  ANSELBbits.ANSB6 = 0;
+  // ANSELx 0 = Digital I/O, 1 = Analog I/O
+  ANSELBbits.ANSB4 = 0;     //Digital I/O
+  ANSELBbits.ANSB5 = 0;     //Digital I/O
+  ANSELBbits.ANSB6 = 0;     //Digital I/O
   
   //CS is low active
-  CS_DIGI_DOT_BOOSTER = 1;      //CS is low active
-  CS_GYROSCOPE = 1;  
+  CS_DIGI_DOT_BOOSTER = 1;      //CS is low active  
 }
 
 
-void SPI_write_DDB(char data){
-    PIE1bits.RCIE = 0;                                   /*Receive Interrupt ausschalten*/  
+//Einzelner Befehl senden ï¿½ber SPI
+void SPI_write_DDB(char data){  
     CS_DIGI_DOT_BOOSTER = 0;
     __delay_ms(5);
     SSPBUF = data;
     while(BF == 0);
-    __delay_ms(4);                          //delay für DDB
-    CS_DIGI_DOT_BOOSTER = 1;
-    PIE1bits.RCIE = 1;                                   /*Receive Interrupt einschalten*/   
+    __delay_ms(4);                          //delay fï¿½r DDB
+    CS_DIGI_DOT_BOOSTER = 1;   
 }
 
-void SPI_write_array_DDB(int array[], int arrayindex){
-    PIE1bits.RCIE = 0;                                   /*Receive Interrupt ausschalten*/         
+//Array senden ï¿½ber SPI
+void SPI_write_array_DDB(int array[], int arrayindex){        
     CS_DIGI_DOT_BOOSTER = 0;
     __delay_ms(5);
     for(int i = 0; i < arrayindex + 1; i++){
         int data = array[i];
         SSPBUF = data;
         while(BF == 0);
-        //__delay_ms(4);        //delay für DDB
         }
-    CS_DIGI_DOT_BOOSTER = 1;
-    PIE1bits.RCIE = 1;                                   /*Receive Interrupt einschalten*/         
+    CS_DIGI_DOT_BOOSTER = 1;      
 }
-
-
-char SPI_read_GS(char instruction){
-  char data;
-  CS_GYROSCOPE = 0;             
-  SSPBUF = instruction;     
-  while(BF == 0);
-  data = SSPBUF;
-  CS_GYROSCOPE = 1;
-  return data;
-}
-
-
 

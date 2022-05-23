@@ -49,6 +49,7 @@
 #define UART_BUFFERSIZE         (16)            /**< Anzahl Zeichen die maximal eingegeben werden k?nnen*/
 #define LEFT    0x01
 #define RIGHT   0x00
+#define RESET_DIGI_DOT_BOOSTER      RB0
 /********************* Funktionsprototypen **************************************/
 inline void ISR_UartRx(void);
 
@@ -56,54 +57,49 @@ inline void ISR_UartRx(void);
 volatile uint8_t uartHasReceived_g = 0;             /**< Flag UART-String empfangen*/
 volatile uint8_t uartBuffer_g[UART_BUFFERSIZE];     /**< UART-String*/
 
-#define LEFT    0x01
-#define RIGHT   0x00
-
-// *** Globale Variablen ***
-
-
 
 
 // *** Main-Routine ***
 void main(void) {
     // *** Port Initialisierung ***
 	// ** TRISx **      0 = Output, 1 = Input
-    TRISBbits.TRISB0 = 0;
-    TRISD = 0x00;           //Output
+    TRISBbits.TRISB0 = 0;   //RB0 as Output
     
     // ** ANSELx **      0 = Digital I/O, 1 = Analog I/0
-    ANSELBbits.ANSB0 = 0;
-    ANSELD = 0x00;          //Digital I/O
-    int direction;
+    ANSELBbits.ANSB0 = 0;   //Digital I/O
     
-    
-    PBA_Init();     /* Initialisieren der Hardware */
+    // Initialisieren der Hardware
+    PBA_Init();     
     UART_Init();
   
-
+    //Initalisierung SPI
     SPI_init();
     SPI_write_DDB(0);
     __delay_ms(1000);
-    RB0 = 0;                //Reset
+    
+    //Reset des DIGI DOT BOOSTER
+    RESET_DIGI_DOT_BOOSTER = 0;                //Reset on
     __delay_ms(100);
-    RB0 = 1;                //Reset off
+    RESET_DIGI_DOT_BOOSTER = 1;                //Reset off
     __delay_ms(100);
+    
+    //Initialisierung des DIGI DOT BOOSTER
     booster_init();
     __delay_ms(30);
-    booster_rgbOrder(2, 3 ,1);        //Standardwert für WS2812
+    booster_rgbOrder(2, 3 ,1);        //Standardwert fï¿½r WS2812
+    
+    //Initialisierung des Spieles
     initializeGame();
     
-    LATD = 0b00011000;
-    INTCONbits.PEIE = 1;                                /*Peripherie-Interrupts akivieren*/
-    PIE1bits.RCIE = 1;                                   /*Receive Interrupt einschalten*/
-    INTCONbits.GIE = 1;                                 /*Globale Interrupts akivieren*/
+    //Initialiserung des Interrupts fï¿½r UART
+    INTCONbits.PEIE = 1;                                //Peripherie-Interrupts akivieren
+    PIE1bits.RCIE = 1;                                  //Receive Interrupt einschalten
+    INTCONbits.GIE = 1;                                 //Globale Interrupts akivieren
    
     
-    if(0 != INT_AddUartCallbackFnc(ISR_UartRx))         /*UART-Interruptroutine festelegen*/
-    {
-        LATD = 0xFF;/* Fehler */
-    }
+    if(0 != INT_AddUartCallbackFnc(ISR_UartRx)){}        //UART-Interruptroutine festelegen
     
+    //Endlos Loop
 	while (1) {
 		ballMove();
 	}
@@ -115,21 +111,18 @@ void main(void) {
  */
 inline void  ISR_UartRx(void)
 {
-    static uint8_t len = 0;                 /*Anzahl empfangene Zeichen*/
-    uint8_t c;                              /*Aktuell eingelesenes Zeichen*/
-    while (PIR1bits.RCIF)                   /*Zeichen im Buffer*/
+    uint8_t c;                              //Aktuell eingelesenes Zeichen
+    while (PIR1bits.RCIF)                   //Zeichen im Buffer
     {
-        c = UART_Getc();                    /*Zeichen einlesen*/        
+        c = UART_Getc();                    //Zeichen einlesen        
         
         if(c == 0){
-            LATD = PORTD >> 1;
             barMove(RIGHT);
         }
         else if(c == 1){
-            LATD = PORTD << 1;
             barMove(LEFT);        
         }
-
+        PIR1bits.RCIF = 0;
     }
 }
 

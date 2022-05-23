@@ -19,29 +19,27 @@
 #define BOOSTER_SETALL      0xA5
 #define BOOSTER_SETRANGE    0xA6
 #define BOOSTER_RGBORDER    0xC1
-#define BOOSTER_SHIFTUP     0xB3
-#define BOOSTER_SHIFTDOWN   0xB4
 
 #define bitsPerLED   24             //24 bit fuer WS2812(RGB)
 #define ledCount     255            //Anzahl LED
            
 
+//Initialisierung des Digi Dot Booster
 void booster_init(void){    
     int buffer[3];
     buffer[0] = BOOSTER_INIT;
     buffer[1] = ledCount;           
     buffer[2] = bitsPerLED;
-    SPI_write_array_DDB(buffer, 2);
-
-    //RGB-Order von GRB auf RGB setzen
-//    booster_rgbOrder(1, 2, 3);    
+    SPI_write_array_DDB(buffer, 2);  
 }
 
+//Booster-Anzeige aktualisieren
 void booster_show(void){
     SPI_write_DDB(BOOSTER_SHOW);
     __delay_ms(8);                  //pro LED 30us, d.h. 256*30us = 7.68 ms
 }
 
+//RGB-Werte setzen
 void booster_setRGB(char red, char green, char blue){
     int buffer[4];
     buffer[0] = BOOSTER_SETRGB;
@@ -51,6 +49,7 @@ void booster_setRGB(char red, char green, char blue){
     SPI_write_array_DDB(buffer, 3);
 }
 
+//Helligkeit einstellen
 void booster_setHSV(char hue_l, char hue_h, char saturation, char volume){
     int buffer[5];
     buffer[0] = BOOSTER_SETHSV;
@@ -61,6 +60,7 @@ void booster_setHSV(char hue_l, char hue_h, char saturation, char volume){
     SPI_write_array_DDB(buffer, 4);
 }
 
+//LED-Position setzen
 void booster_setLED(char led_number){       //led_number von 0 bis 255
     int buffer[2];
     buffer[0] = BOOSTER_SETLED;
@@ -68,10 +68,12 @@ void booster_setLED(char led_number){       //led_number von 0 bis 255
     SPI_write_array_DDB(buffer, 1);
 }
 
+//Ganze LED-Matrix setzen
 void booster_setAll(void){
     SPI_write_DDB(BOOSTER_SETALL);
 }
 
+//Eine bestimmte Range setzen
 void booster_setRange(char start, char end){
     int buffer[3];
     buffer[0] = BOOSTER_SETRANGE;
@@ -80,6 +82,7 @@ void booster_setRange(char start, char end){
     SPI_write_array_DDB(buffer, 2);
 }
 
+//RGB-Reihenfolge einstellen
 void booster_rgbOrder(char index_red, char index_green, char index_blue){
     int buffer[4];
     buffer[0] = BOOSTER_RGBORDER;
@@ -88,29 +91,3 @@ void booster_rgbOrder(char index_red, char index_green, char index_blue){
     buffer[3] = index_blue;
     SPI_write_array_DDB(buffer, 3);
 }
-
-void booster_shiftup(char start, char end, char count){
-  int buffer[4];
-  buffer[0] = BOOSTER_SHIFTUP;
-  buffer[1] = start;
-  buffer[2] = end;
-  buffer[3] = count;
-  SPI_write_array_DDB(buffer, 3);
-}
-
-void booster_shiftdown(char start, char end, char count){
-  int buffer[4];
-  buffer[0] = BOOSTER_SHIFTDOWN;
-  buffer[1] = start;
-  buffer[2] = end;
-  buffer[3] = count;
-  SPI_write_array_DDB(buffer, 3);
-}
-
-
-
-
-
-
-
-
