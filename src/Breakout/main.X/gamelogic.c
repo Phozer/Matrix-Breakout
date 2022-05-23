@@ -9,6 +9,7 @@
 #include "gamelogic.h"
 #include "DIGI_DOT_BOOSTER.h"
 #include "SPI.h"
+#include <stdbool.h>
 
 #define DOWN            0x00
 #define UP              0x01
@@ -22,33 +23,57 @@
 //Globale Variabeln
 char posX1Bar, posX2Bar, posBall;
 char verticalDirection, horizontalDirection, angle;
-const int ballSpeed = 120;
-char bricks[80];
+const int ballSpeed = 100;
+bool bricks[20];
 
 
 //Spielinitialisierung
 
-void initalizeGame(void){
+void initializeGame(void){
   initializeBricks();
-  initalizeBar();
-  initalizeBall();  
+  initializeBar();
+  initializeBall();  
 }
 
 void initializeBricks(void){
-    char index = 0;
-    for(int i = 176; i < 256; i++){
-        bricks[index] = i;
-        index++;
+  //Alle Bricks auf True setzen
+  for(int i = 0; i < 20; i++){
+    bricks[i] = true;
+  }
+  for(int i = 176; i < 256; i = i + 8){
+    if(i >= 192 && i < 208 || i >= 224 && i < 240){
+      booster_setRGB(18, 8, 0);
+      for(int k = 0; k < 4; k++){
+        booster_setLED(i + 4 + k);
+      }
     }
-    for(int i = 176; i < 256; i = i = i++){
-        booster_setRGB(0, 0, 20);
-        booster_setLED(i);
-        booster_show();
+    else{
+      booster_setRGB(18, 8, 0);
+      for(int k = 0; k < 4; k++){
+        booster_setLED(i+k);
+      }
+    }           
+  }
+  booster_show();
+  for(int i = 176; i < 256; i = i + 8){
+    if(i >= 176 && i < 192 || i >= 208 && i < 224 || i >= 240){
+      booster_setRGB(0, 0, 20);
+      for(int k = 0; k < 4; k++){
+        booster_setLED(i + 4 + k);
+      }
     }
+    else{
+      booster_setRGB(0, 0, 20);
+      for(int k = 0; k < 4; k++){
+        booster_setLED(i+k);
+      }
+    }
+  }
+  booster_show();
 }
 
 //Brett-Funktionen
-void initalizeBar(void){
+void initializeBar(void){
   posX1Bar = 7;
   posX2Bar = 9;
   booster_setRGB(20, 0, 0);
@@ -71,18 +96,20 @@ void barMove(char direction){
   barShow();
 }
 void barShow(void){
+  PIE1bits.RCIE = 0;                                   /*Receive Interrupt ausschalten*/  
   booster_setRGB(0, 0, 0);
   booster_setRange(0, 15);
   booster_show();
   booster_setRGB(20, 0, 0);
   booster_setRange(posX1Bar, posX2Bar);
-  booster_show(); 
+  booster_show();
+  PIE1bits.RCIE = 1;                                   /*Receive Interrupt einschalten*/
 }
 
 
 
 //Ball-Funktionen
-void initalizeBall(void){
+void initializeBall(void){
   posBall = 120;
   booster_setRGB(0, 20, 0);
   booster_setLED(posBall);
@@ -92,6 +119,7 @@ void initalizeBall(void){
 }
 
 void ballMove(void){
+  checkWinCondition();
   if(horizontalDirection == NONE){
     ballMoveStraight();
   }
@@ -117,10 +145,13 @@ void ballMoveStraight(void){
     if(posBall <= 31){
       collisionDetectorWithBar();
     }
-  }    
+  }
+  if(posBall > 159){
+      collisionDetectorWithBricks();
+  }
 }
 
-void ballMoveDiagonal(void){  
+void ballMoveDiagonal(void){
   if(posBall < 240 && verticalDirection == UP && horizontalDirection == LEFT){
     ballDeleteOldPos();
     posBall = posBall + 17;
@@ -141,7 +172,7 @@ void ballMoveDiagonal(void){
     }
     if(posBall % 16 == 0){
       horizontalDirection = LEFT;
-    }
+    }    
   }
   else if(posBall > 31 && verticalDirection == DOWN && horizontalDirection == LEFT){
     ballDeleteOldPos();
@@ -165,18 +196,26 @@ void ballMoveDiagonal(void){
       horizontalDirection = LEFT;
     }
   }
+  if(posBall > 159){
+      collisionDetectorWithBricks();
+  }
+  
 }
 
 void ballDeleteOldPos(void){
+  PIE1bits.RCIE = 0;                                   /*Receive Interrupt ausschalten*/
   booster_setRGB(0,0,0);
   booster_setLED(posBall);
   booster_show();
+  PIE1bits.RCIE = 1;                                   /*Receive Interrupt einschalten*/
 }
 
 void ballShowNewPos(void){
+  PIE1bits.RCIE = 0;                                   /*Receive Interrupt ausschalten*/
   booster_setRGB(0, 20, 0);
   booster_setLED(posBall);
-  booster_show();  
+  booster_show();
+  PIE1bits.RCIE = 1;                                   /*Receive Interrupt einschalten*/  
 }
 
 void collisionDetectorWithBar(void){
@@ -201,6 +240,7 @@ void collisionDetectorWithBar(void){
     horizontalDirection = LEFT;
   }
   else{
+    initializeBricks();
     ballDeleteOldPos();
     posBall = 120;
     ballShowNewPos();
@@ -210,12 +250,81 @@ void collisionDetectorWithBar(void){
 }
 
 void collisionDetectorWithBricks(void){
-    char arrLen = sizeof bricks / sizeof bricks[0];
-    for(int i = 0; i < arrLen; i++){
-        if(bricks[i] == posBall){
-            booster_setRGB(20, 20, 20);
-            booster_setLED(posBall);
-            booster_show();
+  if(verticalDirection == UP  && horizontalDirection == NONE){
+    if(bricks[(posBall - 160) / 4] == true){
+        verticalDirection = DOWN;
+        bricks[(posBall - 160) / 4] = false;
+        deleteBrick((posBall-160) / 4);
+    }
+    
+  }
+  else if(verticalDirection == UP && horizontalDirection != NONE){
+    
+    if(bricks[(posBall - 160) / 4] == true){
+        verticalDirection = DOWN;
+        bricks[(posBall - 160) / 4] = false;
+        deleteBrick((posBall-160) / 4);
+    }
+    if (posBall % 4 == 0){
+        if(verticalDirection == UP){
+            if(horizontalDirection == RIGHT && bricks[((posBall - 160) / 4) - 4 - 1] == true){
+                horizontalDirection = LEFT;
+                bricks[((posBall - 160) / 4) - 4 - 1] = false;
+                deleteBrick(((posBall - 160) / 4) - 4 - 1);
+            }   
+            else if(horizontalDirection == RIGHT && bricks[((posBall - 160) / 4) - 1] == true){
+                horizontalDirection = LEFT;
+                bricks[((posBall - 160) / 4) - 1] = false;
+                deleteBrick(((posBall - 160) / 4) - 1);
+            }
         }
-    }    
+        else if(verticalDirection == DOWN){
+            if(horizontalDirection == RIGHT && bricks[((posBall - 160) / 4) - 4 - 1] == true){
+                horizontalDirection = LEFT;
+                bricks[((posBall - 160) / 4) - 4 - 1] = false;
+                deleteBrick(((posBall - 160) / 4) - 4 - 1);
+            }
+        }
+    }
+    if(posBall % 4 == 3){
+        if(verticalDirection == UP){
+           if(horizontalDirection == LEFT && bricks[((posBall - 160) / 4) - 4 + 1] == true){
+                horizontalDirection = RIGHT;
+                bricks[((posBall - 160) / 4) - 4 + 1] = false;
+                deleteBrick(((posBall - 160) / 4) - 4 + 1);
+            }
+            else if(horizontalDirection == LEFT && bricks[((posBall - 160) / 4) + 1] == true){
+                horizontalDirection = RIGHT;
+                bricks[((posBall - 160) / 4) + 1] = false;
+                deleteBrick(((posBall - 160) / 4) + 1);
+            } 
+        }
+        else if(verticalDirection == DOWN){
+            if(horizontalDirection == LEFT && bricks[((posBall - 160) / 4) - 4 + 1] == true){
+                horizontalDirection = RIGHT;
+                bricks[((posBall - 160) / 4) - 4 + 1] = false;
+                deleteBrick(((posBall - 160) / 4) - 4 + 1);
+            }
+        }
+    }
+  }
+}
+
+void deleteBrick(char arrayIndex){
+    booster_setRGB(0, 0, 0);
+    for(int i = 0; i < 4; i ++){
+        booster_setLED(176 + i + arrayIndex * 4);
+    }
+}
+
+void checkWinCondition(void){
+  int count = 0;
+  for(int i = 0; i < 20; i++){
+      if(bricks[i] == false){
+          count++;
+      }
+  }
+  if(count == 20){
+      initializeGame();
+  }
 }

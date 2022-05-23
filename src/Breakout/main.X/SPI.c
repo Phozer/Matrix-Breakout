@@ -53,24 +53,28 @@ void SPI_init(){
 
 
 void SPI_write_DDB(char data){
+    PIE1bits.RCIE = 0;                                   /*Receive Interrupt ausschalten*/  
     CS_DIGI_DOT_BOOSTER = 0;
     __delay_ms(5);
     SSPBUF = data;
     while(BF == 0);
     __delay_ms(4);                          //delay für DDB
     CS_DIGI_DOT_BOOSTER = 1;
+    PIE1bits.RCIE = 1;                                   /*Receive Interrupt einschalten*/   
 }
 
 void SPI_write_array_DDB(int array[], int arrayindex){
+    PIE1bits.RCIE = 0;                                   /*Receive Interrupt ausschalten*/         
     CS_DIGI_DOT_BOOSTER = 0;
     __delay_ms(5);
     for(int i = 0; i < arrayindex + 1; i++){
         int data = array[i];
         SSPBUF = data;
         while(BF == 0);
-        //__delay_ms(1);        //delay für DDB
+        //__delay_ms(4);        //delay für DDB
         }
     CS_DIGI_DOT_BOOSTER = 1;
+    PIE1bits.RCIE = 1;                                   /*Receive Interrupt einschalten*/         
 }
 
 

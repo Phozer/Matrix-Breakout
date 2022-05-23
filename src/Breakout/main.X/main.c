@@ -40,37 +40,47 @@
 
 // Include Files
 #include <xc.h>
+#include "inc/PBA_config.h"
 #include "SPI.h"
 #include "DIGI_DOT_BOOSTER.h"
 #include "gamelogic.h"
 
+/********************* Defines / Makros / Konstanten ****************************************/
+#define UART_BUFFERSIZE         (16)            /**< Anzahl Zeichen die maximal eingegeben werden k?nnen*/
+#define LEFT    0x01
+#define RIGHT   0x00
+/********************* Funktionsprototypen **************************************/
+inline void ISR_UartRx(void);
+
+/********************* Globale Daten ********************************************/
+volatile uint8_t uartHasReceived_g = 0;             /**< Flag UART-String empfangen*/
+volatile uint8_t uartBuffer_g[UART_BUFFERSIZE];     /**< UART-String*/
 
 #define LEFT    0x01
-#define RIGHT  0x00
+#define RIGHT   0x00
 
 // *** Globale Variablen ***
 
-//*** Funktionsprototypen ***
-//void posEdgeDetection(void);
-void initINTR(void);
-void interrupt ISR(void);
+
 
 
 // *** Main-Routine ***
 void main(void) {
-  
-	// *** Port Initialisierung ***
+    // *** Port Initialisierung ***
 	// ** TRISx **      0 = Output, 1 = Input
     TRISBbits.TRISB0 = 0;
-    TRISAbits.TRISA0 = 1;
-    TRISAbits.TRISA1 = 1;  
-
-	// ** ANSELx **      0 = Digital I/O, 1 = Analog I/0
-    ANSELBbits.ANSB0 = 0;
-    ANSELAbits.ANSA0 = 0;
-    ANSELAbits.ANSA1 = 0;    
+    TRISD = 0x00;           //Output
     
-    initINTR();
+    // ** ANSELx **      0 = Digital I/O, 1 = Analog I/0
+    ANSELBbits.ANSB0 = 0;
+    ANSELD = 0x00;          //Digital I/O
+    int direction;
+    
+    
+    PBA_Init();     /* Initialisieren der Hardware */
+    UART_Init();
+  
+
     SPI_init();
     SPI_write_DDB(0);
     __delay_ms(1000);
@@ -81,34 +91,47 @@ void main(void) {
     booster_init();
     __delay_ms(30);
     booster_rgbOrder(2, 3 ,1);        //Standardwert für WS2812
-    initalizeGame();
-
+    initializeGame();
+    
+    LATD = 0b00011000;
+    INTCONbits.PEIE = 1;                                /*Peripherie-Interrupts akivieren*/
+    PIE1bits.RCIE = 1;                                   /*Receive Interrupt einschalten*/
+    INTCONbits.GIE = 1;                                 /*Globale Interrupts akivieren*/
+   
+    
+    if(0 != INT_AddUartCallbackFnc(ISR_UartRx))         /*UART-Interruptroutine festelegen*/
+    {
+        LATD = 0xFF;/* Fehler */
+    }
+    
 	while (1) {
 		ballMove();
 	}
 }
 
-
-void initINTR(void) {
-	IOCAPbits.IOCAP0 = 1;       //IOC Port B pin 5 positive Flanke getriggert
-    IOCAPbits.IOCAP1 = 1;
-	INTCONbits.IOCIE = 1;       //IOC enable bit
-	INTCONbits.GIE = 1;         //Enable Interrupt
-}
-
-void interrupt ISR(void) {
-	if (IOCAF0) {				//Interrupt Flag vom IOC pin
-		__delay_ms(1);         //Entprellen des Schalters
-		if (RA0 == 1) {
-			barMove(RIGHT);
-		}
-		IOCAF0 = 0;
-	}
-    if(IOCAF1){
-        __delay_ms(1);
-        if(RA1 == 1){
-            barMove(LEFT);
+/**
+ * @brief UART Empfangsinterrupt
+ * Liest Zeichen ein, bis Carriage return empfangen
+ */
+inline void  ISR_UartRx(void)
+{
+    static uint8_t len = 0;                 /*Anzahl empfangene Zeichen*/
+    uint8_t c;                              /*Aktuell eingelesenes Zeichen*/
+    while (PIR1bits.RCIF)                   /*Zeichen im Buffer*/
+    {
+        c = UART_Getc();                    /*Zeichen einlesen*/        
+        
+        if(c == 0){
+            LATD = PORTD >> 1;
+            barMove(RIGHT);
         }
-        IOCAF1 = 0;
+        else if(c == 1){
+            LATD = PORTD << 1;
+            barMove(LEFT);        
+        }
+
     }
 }
+
+
+
